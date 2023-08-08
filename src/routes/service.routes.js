@@ -2,6 +2,7 @@ import { Router } from "express";
 import validateSchema from "../middlewares/validationSchema.middlewares.js";
 import {
   createService,
+  deleteService,
   getAllServices,
   serviceById,
   updateService,
@@ -18,5 +19,6 @@ serviceRouter.post(
 serviceRouter.get("/home", getAllServices);
 serviceRouter.get("/service/:id", serviceById);
 serviceRouter.put("/service/:id", updateService);
+serviceRouter.delete("/service/:id", deleteService);
 
 export default serviceRouter;

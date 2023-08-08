@@ -157,3 +157,35 @@ export async function updateService(req, res) {
     res.status(500).send(error.message);
   }
 }
+
+export async function deleteService(req, res) {
+  const { authorization } = req.headers;
+  const token = authorization?.replace("Bearer ", "");
+  const { id } = req.params;
+
+  if (isNaN(id) || id <= 0) {
+    return res.status(404).send({ message: "URL não encontrada" });
+  }
+  if (!token) {
+    return res.status(401).send({ message: "Falha na autorização" });
+  }
+
+  try {
+    const service = await db.query(`SELECT * FROM services WHERE id = $1`, [
+      id,
+    ]);
+    const session = await db.query(`SELECT * FROM sessions WHERE token = $1`, [
+      token,
+    ]);
+
+    if (service.rows[0].serviceProviderId != session.rows[0].userId) {
+      return res.status(401).send({ message: "Falha na autorização" });
+    }
+
+    await db.query(`DELETE FROM services WHERE id = $1;`, [service.rows[0].id]);
+
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
