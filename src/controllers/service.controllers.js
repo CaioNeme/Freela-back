@@ -35,7 +35,7 @@ export async function createService(req, res) {
       `INSERT INTO 
         services (title, "subTitle", description, price, address, "categoryId", "rangeId", "mainImage", "serviceProviderId") 
       VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
       [
         title,
         subTitle,
@@ -274,7 +274,7 @@ export async function serviceByUserId(req, res) {
     );
 
     if (services.rowCount != 1) {
-      res.status(404).send({ message: "serviço não encontrado." });
+      return res.status(404).send({ message: "serviço não encontrado." });
     }
 
     res.status(200).send(services.rows[0].result);
