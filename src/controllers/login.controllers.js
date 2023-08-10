@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
 export async function signUp(req, res) {
-  const { email, name, phone, password, confirmPassword } = req.body;
+  const { email, name, phone, cpf, password, confirmPassword } = req.body;
   if (password != confirmPassword) {
     return res.status(422).send({ message: "As senhas não coincidem" });
   }
@@ -20,8 +20,8 @@ export async function signUp(req, res) {
     const passwordHash = bcrypt.hashSync(password, 10);
 
     await db.query(
-      `INSERT INTO users (email, name, phone, password) VALUES ($1, $2, $3, $4);`,
-      [email, name, phone, passwordHash]
+      `INSERT INTO users (email, name, phone, cpf, password) VALUES ($1, $2, $3, $4, $5);`,
+      [email, name, phone, cpf, passwordHash]
     );
     res.sendStatus(201);
   } catch (err) {

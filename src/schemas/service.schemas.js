@@ -7,7 +7,7 @@ export const createServiceSchema = joi.object({
   price: joi.number().required(),
   address: joi.string().required(),
   categoryId: joi.number().required(),
-  range: joi.number().required(),
+  rangeId: joi.number().required(),
   mainImage: joi.string().uri().required(),
   status: joi.string().allow("true", "false"),
 });

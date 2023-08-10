@@ -10,7 +10,7 @@ export async function createService(req, res) {
     price,
     address,
     categoryId,
-    range,
+    rangeId,
     mainImage,
   } = req.body;
 
@@ -33,9 +33,9 @@ export async function createService(req, res) {
 
     await db.query(
       `INSERT INTO 
-        services (title, "subTitle", description, price, address, "categoryId", range, "mainImage", "serviceProviderId", "contactEmail", "contactPhone" ) 
+        services (title, "subTitle", description, price, address, "categoryId", "rangeId", "mainImage", "serviceProviderId") 
       VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         title,
         subTitle,
@@ -43,11 +43,9 @@ export async function createService(req, res) {
         price,
         address,
         categoryId,
-        range,
+        rangeId,
         mainImage,
         user.rows[0].id,
-        user.rows[0].email,
-        user.rows[0].phone,
       ]
     );
 
@@ -59,8 +57,32 @@ export async function createService(req, res) {
 
 export async function getAllServices(req, res) {
   try {
-    const services = await db.query(`SELECT * FROM services;`);
-    res.status(200).send(services.rows);
+    const services = await db.query(`
+    SELECT 
+      JSON_BUILD_OBJECT(
+          'id', services.id,
+          'title', services.title,
+          'subTitle', services."subTitle",
+          'description', services.description,
+          'price', services.price,
+          'address', services.address,
+          'rangeId', services."rangeId",
+          'mainImage', services."mainImage",
+          'categoryId', services."categoryId",
+          'serviceProviderId', services."serviceProviderId",
+          'status', services.status,
+          'user', JSON_BUILD_OBJECT(
+              'name', users.name,
+              'email', users.email,
+              'phone', users.phone
+          )
+      ) AS result
+    FROM users
+    JOIN services ON users.id = services."serviceProviderId";
+`);
+    const servicesReformated = services.rows.map((obj) => obj.result);
+
+    res.status(200).send(servicesReformated);
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -74,15 +96,39 @@ export async function serviceById(req, res) {
   }
 
   try {
-    const service = await db.query(`SELECT * FROM services WHERE id = $1`, [
-      id,
-    ]);
+    const service = await db.query(
+      `
+    SELECT 
+      JSON_BUILD_OBJECT(
+          'id', services.id,
+          'title', services.title,
+          'subTitle', services."subTitle",
+          'description', services.description,
+          'price', services.price,
+          'address', services.address,
+          'rangeId', services."rangeId",
+          'mainImage', services."mainImage",
+          'categoryId', services."categoryId",
+          'serviceProviderId', services."serviceProviderId",
+          'status', services.status,
+          'user', JSON_BUILD_OBJECT(
+              'name', users.name,
+              'email', users.email,
+              'phone', users.phone
+          )
+      ) AS result
+    FROM users
+    JOIN services ON users.id = services."serviceProviderId"
+    WHERE services.id = $1
+    ;`,
+      [id]
+    );
 
     if (service.rowCount != 1) {
       res.status(404).send({ message: "serviço não encontrado." });
     }
 
-    res.status(200).send(service.rows[0]);
+    res.status(200).send(service.rows[0].result);
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -99,7 +145,7 @@ export async function updateService(req, res) {
     price,
     address,
     categoryId,
-    range,
+    rangeId,
     mainImage,
     status,
   } = req.body;
@@ -132,7 +178,7 @@ export async function updateService(req, res) {
         price = $4,
         address = $5,
         "categoryId" = $6,
-        range = $7,
+        "rangeId" = $7,
         "mainImage" = $8,
         status = $9
       WHERE
@@ -145,14 +191,14 @@ export async function updateService(req, res) {
         price,
         address,
         categoryId,
-        range,
+        rangeId,
         mainImage,
         status,
         id,
       ]
     );
 
-    res.sendStatus(201);
+    res.sendStatus(200);
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -185,6 +231,53 @@ export async function deleteService(req, res) {
     await db.query(`DELETE FROM services WHERE id = $1;`, [service.rows[0].id]);
 
     res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+}
+
+export async function serviceByUserId(req, res) {
+  const { id } = req.params;
+
+  if (isNaN(id) || id <= 0) {
+    return res.status(404).send({ message: "URL não encontrada" });
+  }
+  try {
+    const services = await db.query(
+      `SELECT 
+      JSON_BUILD_OBJECT(
+          'name', users.name,
+          'email', users.email,
+          'phone', users.phone,
+          'services', JSON_AGG(
+              JSON_BUILD_OBJECT(
+                  'id', services.id,
+                  'title', services.title,
+                  'subTitle', services."subTitle",
+                  'description', services.description,
+                  'price', services.price,
+                  'address', services.address,
+                  'rangeId', services."rangeId",
+                  'mainImage', services."mainImage",
+                  'categoryId', services."categoryId",
+                  'serviceProviderId', services."serviceProviderId",
+                  'status', services.status
+              )
+            )
+          ) AS result
+      FROM services
+      JOIN users ON services."serviceProviderId" = users.id
+      WHERE users.id = $1
+      GROUP BY users.name, users.email, users.phone
+      ;`,
+      [id]
+    );
+
+    if (services.rowCount != 1) {
+      res.status(404).send({ message: "serviço não encontrado." });
+    }
+
+    res.status(200).send(services.rows[0].result);
   } catch (error) {
     res.status(500).send(error.message);
   }

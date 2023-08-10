@@ -5,6 +5,7 @@ import {
   deleteService,
   getAllServices,
   serviceById,
+  serviceByUserId,
   updateService,
 } from "../controllers/service.controllers.js";
 import { createServiceSchema } from "../schemas/service.schemas.js";
@@ -20,5 +21,6 @@ serviceRouter.get("/home", getAllServices);
 serviceRouter.get("/service/:id", serviceById);
 serviceRouter.put("/service/:id", updateService);
 serviceRouter.delete("/service/:id", deleteService);
+serviceRouter.get("/users/:id", serviceByUserId);
 
 export default serviceRouter;
