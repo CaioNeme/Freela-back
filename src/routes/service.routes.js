@@ -19,8 +19,12 @@ serviceRouter.post(
 );
 serviceRouter.get("/home", getAllServices);
 serviceRouter.get("/service/:id", serviceById);
-serviceRouter.put("/service/:id", updateService);
-serviceRouter.delete("/service/:id", deleteService);
 serviceRouter.get("/users/:id", serviceByUserId);
+serviceRouter.put(
+  "/service/:id",
+  validateSchema(createServiceSchema),
+  updateService
+);
+serviceRouter.delete("/service/:id", deleteService);
 
 export default serviceRouter;
