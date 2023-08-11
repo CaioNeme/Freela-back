@@ -5,11 +5,20 @@ import {
   postContract,
   updateContract,
 } from "../controllers/contracts.controllers.js";
+import { contractSchema } from "../schemas/contracts.schemas.js";
 
 const contractRouter = Router();
 
-contractRouter.post("/contract/:id", postContract);
-contractRouter.get("/contract/:id", getContract);
-contractRouter.put("/contract/:id", updateContract);
+contractRouter.post(
+  "/contract/:id",
+  validateSchema(contractSchema),
+  postContract
+);
+contractRouter.put(
+  "/contract/:id",
+  validateSchema(contractSchema),
+  updateContract
+);
+contractRouter.get("/contract", getContract);
 
 export default contractRouter;

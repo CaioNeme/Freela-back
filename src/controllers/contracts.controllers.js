@@ -58,13 +58,9 @@ export async function postContract(req, res) {
 export async function getContract(req, res) {
   const { authorization } = req.headers;
   const token = authorization?.replace("Bearer ", "");
-  const { id } = req.params;
 
   if (!token) {
     return res.status(401).send({ message: "Falha na autorização" });
-  }
-  if (isNaN(id) || id <= 0) {
-    return res.status(404).send({ message: "URL não encontrada" });
   }
 
   try {
@@ -77,12 +73,33 @@ export async function getContract(req, res) {
     }
 
     const rajada = await db.query(
-      `SELECT * FROM contracts WHERE "userId" = $1;`,
+      `SELECT
+        JSON_BUILD_OBJECT(
+          'userId', u."id",
+          'name', u."name",
+          'contracts', JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', c."id",
+              'startDate', c."startDate",
+              'endDate', c."endDate",
+              'idService', c."idService",
+              'status', c."status"
+            )
+          )
+        ) AS user
+      FROM
+        "users" u
+      JOIN
+        "contracts" c ON u."id" = c."userId"
+      WHERE
+        u."id" = $1
+      GROUP BY
+        u."id", u."name", u."email", u."phone";
+  `,
       [session.rows[0].userId]
     );
-    console.log(rajada.rows);
 
-    res.status(200).send("Objeto complexo com altas paradas");
+    res.status(200).send(rajada.rows[0].user);
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -109,9 +126,6 @@ export async function updateContract(req, res) {
     const contract = await db.query(`SELECT * FROM contracts WHERE id = $1;`, [
       id,
     ]);
-
-    console.log(session.rows);
-    console.log(contract.rows);
 
     if (contract.rows[0].userId != session.rows[0].userId) {
       return res.status(401).send({ message: "Falha na autorização" });

@@ -97,9 +97,8 @@ export async function serviceById(req, res) {
 
   try {
     const service = await db.query(
-      `
-    SELECT 
-      JSON_BUILD_OBJECT(
+      `SELECT 
+        JSON_BUILD_OBJECT(
           'id', services.id,
           'title', services.title,
           'subTitle', services."subTitle",
@@ -112,14 +111,14 @@ export async function serviceById(req, res) {
           'serviceProviderId', services."serviceProviderId",
           'status', services.status,
           'user', JSON_BUILD_OBJECT(
-              'name', users.name,
-              'email', users.email,
-              'phone', users.phone
+            'name', users.name,
+            'email', users.email,
+            'phone', users.phone
           )
-      ) AS result
-    FROM users
-    JOIN services ON users.id = services."serviceProviderId"
-    WHERE services.id = $1
+        ) AS result
+      FROM users
+      JOIN services ON users.id = services."serviceProviderId"
+      WHERE services.id = $1
     ;`,
       [id]
     );
