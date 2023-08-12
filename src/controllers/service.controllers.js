@@ -79,7 +79,7 @@ export async function getAllServices(req, res) {
       ) AS result
     FROM users
     JOIN services ON users.id = services."serviceProviderId";
-`);
+    `);
     const servicesReformated = services.rows.map((obj) => obj.result);
 
     res.status(200).send(servicesReformated);
@@ -124,7 +124,7 @@ export async function serviceById(req, res) {
     );
 
     if (service.rowCount != 1) {
-      res.status(404).send({ message: "serviço não encontrado." });
+      return res.status(404).send({ message: "serviço não encontrado." });
     }
 
     res.status(200).send(service.rows[0].result);
@@ -137,17 +137,7 @@ export async function updateService(req, res) {
   const { authorization } = req.headers;
   const token = authorization?.replace("Bearer ", "");
   const { id } = req.params;
-  const {
-    title,
-    subTitle,
-    description,
-    price,
-    address,
-    categoryId,
-    rangeId,
-    mainImage,
-    status,
-  } = req.body;
+  const { status } = req.body;
 
   if (isNaN(id) || id <= 0) {
     return res.status(404).send({ message: "URL não encontrada" });
@@ -171,30 +161,11 @@ export async function updateService(req, res) {
     await db.query(
       `UPDATE services 
       SET
-        title = $1,
-        "subTitle" = $2,
-        description = $3,
-        price = $4,
-        address = $5,
-        "categoryId" = $6,
-        "rangeId" = $7,
-        "mainImage" = $8,
-        status = $9
+        status = $1
       WHERE
-        id = $10
+        id = $2
     ;`,
-      [
-        title,
-        subTitle,
-        description,
-        price,
-        address,
-        categoryId,
-        rangeId,
-        mainImage,
-        status,
-        id,
-      ]
+      [status, id]
     );
 
     res.sendStatus(200);
@@ -236,12 +207,21 @@ export async function deleteService(req, res) {
 }
 
 export async function serviceByUserId(req, res) {
-  const { id } = req.params;
+  const { authorization } = req.headers;
+  const token = authorization?.replace("Bearer ", "");
 
-  if (isNaN(id) || id <= 0) {
-    return res.status(404).send({ message: "URL não encontrada" });
+  if (!token) {
+    return res.status(401).send({ message: "Falha na autorização" });
   }
+
   try {
+    const session = await db.query(`SELECT * FROM sessions WHERE token = $1;`, [
+      token,
+    ]);
+    if (session.rowCount != 1) {
+      return res.status(401).send({ message: "Falha na autorização" });
+    }
+
     const services = await db.query(
       `SELECT 
       JSON_BUILD_OBJECT(
@@ -269,7 +249,7 @@ export async function serviceByUserId(req, res) {
       WHERE users.id = $1
       GROUP BY users.name, users.email, users.phone
       ;`,
-      [id]
+      [session.rows[0].userId]
     );
 
     if (services.rowCount != 1) {

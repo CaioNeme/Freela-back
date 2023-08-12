@@ -74,39 +74,40 @@ export async function getContract(req, res) {
 
     const rajada = await db.query(
       `SELECT
+        u."id" AS "userId",
+        u."name",
+      JSON_AGG(
         JSON_BUILD_OBJECT(
-          'userId', u."id",
-          'name', u."name",
-          'contracts', JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'id', c."id",
-              'startDate', c."startDate",
-              'endDate', c."endDate",
-              'idService', c."idService",
-              'status', c."status"
-            )
-          )
-        ) AS user
+          'id', c."id",
+          'startDate', c."startDate",
+          'endDate', c."endDate",
+          'idService', c."idService",
+          'serviceName', s."title",
+          'status', c."status"
+        )
+      ) AS contracts
       FROM
         "users" u
       JOIN
         "contracts" c ON u."id" = c."userId"
+      JOIN
+        "services" s ON c."idService" = s."id" 
       WHERE
         u."id" = $1
       GROUP BY
-        u."id", u."name", u."email", u."phone";
-  `,
+        u."id", u."name";
+      `,
       [session.rows[0].userId]
     );
 
-    res.status(200).send(rajada.rows[0].user);
+    res.status(200).send(rajada.rows[0]);
   } catch (error) {
     res.status(500).send(error.message);
   }
 }
 
 export async function updateContract(req, res) {
-  const { startDate, endDate, status } = req.body;
+  const { status } = req.body;
   const { authorization } = req.headers;
   const token = authorization?.replace("Bearer ", "");
   const { id } = req.params;
@@ -135,13 +136,11 @@ export async function updateContract(req, res) {
       `
       UPDATE contracts 
       SET 
-        "startDate" = $1, 
-        "endDate" = $2, 
-        status = $3
+        status = $1
       WHERE
-        id = $4
+        id = $2
     ;`,
-      [startDate, endDate, status, id]
+      [status, id]
     );
 
     res.sendStatus(200);

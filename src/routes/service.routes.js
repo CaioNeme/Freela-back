@@ -8,7 +8,10 @@ import {
   serviceByUserId,
   updateService,
 } from "../controllers/service.controllers.js";
-import { createServiceSchema } from "../schemas/service.schemas.js";
+import {
+  PutServiceSchema,
+  createServiceSchema,
+} from "../schemas/service.schemas.js";
 
 const serviceRouter = Router();
 
@@ -19,10 +22,10 @@ serviceRouter.post(
 );
 serviceRouter.get("/home", getAllServices);
 serviceRouter.get("/service/:id", serviceById);
-serviceRouter.get("/users/:id", serviceByUserId);
+serviceRouter.get("/users", serviceByUserId);
 serviceRouter.put(
   "/service/:id",
-  validateSchema(createServiceSchema),
+  validateSchema(PutServiceSchema),
   updateService
 );
 serviceRouter.delete("/service/:id", deleteService);

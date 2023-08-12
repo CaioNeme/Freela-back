@@ -9,5 +9,8 @@ export const createServiceSchema = joi.object({
   categoryId: joi.number().required(),
   rangeId: joi.number().allow("1", "2", "3").required(),
   mainImage: joi.string().uri().required(),
-  status: joi.bool().allow(true, false),
+});
+
+export const PutServiceSchema = joi.object({
+  status: joi.bool().allow(true, false).required(),
 });

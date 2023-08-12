@@ -5,7 +5,10 @@ import {
   postContract,
   updateContract,
 } from "../controllers/contracts.controllers.js";
-import { contractSchema } from "../schemas/contracts.schemas.js";
+import {
+  contractPutSchema,
+  contractSchema,
+} from "../schemas/contracts.schemas.js";
 
 const contractRouter = Router();
 
@@ -16,7 +19,7 @@ contractRouter.post(
 );
 contractRouter.put(
   "/contract/:id",
-  validateSchema(contractSchema),
+  validateSchema(contractPutSchema),
   updateContract
 );
 contractRouter.get("/contract", getContract);
