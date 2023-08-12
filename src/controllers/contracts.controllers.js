@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { db } from "../database/database.connection.js";
 
 export async function postContract(req, res) {
-  const { startDate, endDate } = req.body;
+  const { startDate } = req.body;
   const { authorization } = req.headers;
   const token = authorization?.replace("Bearer ", "");
   const { id } = req.params;
@@ -12,14 +12,6 @@ export async function postContract(req, res) {
   }
   if (isNaN(id) || id <= 0) {
     return res.status(404).send({ message: "URL não encontrada" });
-  }
-
-  const dayDiff = dayjs(startDate).unix() - dayjs().unix();
-
-  if (dayDiff < 0) {
-    return res.status(400).send({
-      message: "Não é possivel começar um trabalho antes de assinar o contrato",
-    });
   }
 
   try {
@@ -44,9 +36,13 @@ export async function postContract(req, res) {
 
     await db.query(
       `INSERT INTO 
-        contracts ("startDate", "endDate", "userId", "idService") 
-      VALUES ($1, $2, $3, $4);`,
-      [startDate, endDate, session.rows[0].userId, service.rows[0].id]
+        contracts ("startDate", "userId", "idService") 
+      VALUES ($1, $2, $3);`,
+      [
+        dayjs(startDate).format("MM/DD/YYYY"),
+        session.rows[0].userId,
+        service.rows[0].id,
+      ]
     );
 
     res.sendStatus(201);
@@ -136,7 +132,8 @@ export async function updateContract(req, res) {
       `
       UPDATE contracts 
       SET 
-        status = $1
+        status = $1,
+        "endDate" = now()
       WHERE
         id = $2
     ;`,
